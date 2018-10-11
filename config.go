@@ -151,14 +151,6 @@ var urlType = reflect.TypeOf(url.URL{})
 
 func (c *Config) assign(target reflect.Value, val string) error {
 	v := reflect.ValueOf(val)
-	var ptr reflect.Value
-
-	if target.Type().Kind() == reflect.Ptr {
-		ptr = target
-		target = reflect.Indirect(target)
-	} else {
-		ptr = target.Addr()
-	}
 
 	if !target.CanSet() {
 		return errors.New("cannot set the value")
@@ -170,7 +162,7 @@ func (c *Config) assign(target reflect.Value, val string) error {
 		return nil
 	}
 
-	iface := ptr.Interface()
+	iface := target.Addr().Interface()
 
 	// Special handling of URLs, because it's so common and why
 	// doesn't it implement TextUnmarshaler.
