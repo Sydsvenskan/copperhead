@@ -1,4 +1,4 @@
-module github.com/Sydsvenskan/config
+module github.com/Sydsvenskan/copperhead
 
 require (
 	github.com/pkg/errors v0.8.0

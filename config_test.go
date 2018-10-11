@@ -1,11 +1,11 @@
-package config_test
+package copperhead_test
 
 import (
 	"net/url"
 	"os"
 	"testing"
 
-	"github.com/Sydsvenskan/config"
+	"github.com/Sydsvenskan/copperhead"
 	"github.com/pkg/errors"
 )
 
@@ -41,7 +41,7 @@ func (*textFail) UnmarshalText(data []byte) error {
 }
 
 func TestNilConfiguration(t *testing.T) {
-	_, err := config.New(nil)
+	_, err := copperhead.New(nil)
 	if err == nil {
 		t.Error("expected nil config value to fail")
 		return
@@ -51,7 +51,7 @@ func TestNilConfiguration(t *testing.T) {
 
 func TestNonStructConfiguration(t *testing.T) {
 	var conf string
-	_, err := config.New(&conf)
+	_, err := copperhead.New(&conf)
 	if err == nil {
 		t.Error("expected non-struct config value to fail")
 		return
@@ -60,7 +60,7 @@ func TestNonStructConfiguration(t *testing.T) {
 }
 
 func TestValueConfiguration(t *testing.T) {
-	_, err := config.New(mixConf{})
+	_, err := copperhead.New(mixConf{})
 	if err == nil {
 		t.Error("expected config passed by value to fail")
 		return
@@ -69,10 +69,10 @@ func TestValueConfiguration(t *testing.T) {
 }
 
 func TestOptionalFile(t *testing.T) {
-	_, err := config.New(&mixConf{},
-		config.WithConfigurationFile(
+	_, err := copperhead.New(&mixConf{},
+		copperhead.WithConfigurationFile(
 			"foobar.json",
-			config.FileOptional, nil,
+			copperhead.FileOptional, nil,
 		),
 	)
 	if err != nil {
@@ -81,10 +81,10 @@ func TestOptionalFile(t *testing.T) {
 }
 
 func TestReadFileFailure(t *testing.T) {
-	_, err := config.New(&mixConf{},
-		config.WithConfigurationFile(
+	_, err := copperhead.New(&mixConf{},
+		copperhead.WithConfigurationFile(
 			"./",
-			config.FileRequired, nil,
+			copperhead.FileRequired, nil,
 		),
 	)
 	if err == nil {
@@ -94,10 +94,10 @@ func TestReadFileFailure(t *testing.T) {
 }
 
 func TestRequiredFileFailure(t *testing.T) {
-	_, err := config.New(&mixConf{},
-		config.WithConfigurationFile(
+	_, err := copperhead.New(&mixConf{},
+		copperhead.WithConfigurationFile(
 			"foobar.json",
-			config.FileRequired, nil,
+			copperhead.FileRequired, nil,
 		),
 	)
 	if err == nil {
@@ -109,8 +109,8 @@ func TestRequiredFileFailure(t *testing.T) {
 func TestConfigurationData(t *testing.T) {
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithConfigurationData(
+	_, err := copperhead.New(v,
+		copperhead.WithConfigurationData(
 			[]byte(`{"Text":"hello"}`), nil,
 		),
 	)
@@ -127,8 +127,8 @@ func TestEmptyInterfaceStringValue(t *testing.T) {
 	os.Setenv("FUBAR", "foo")
 
 	v := &mixConf{}
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"EmptyInterface": "FUBAR",
 		}),
 	)
@@ -150,8 +150,8 @@ func TestPointerToPointer(t *testing.T) {
 	os.Setenv("FUBAR", "foo")
 
 	v := &mixConf{}
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"DoublePointer.Value": "FUBAR",
 		}),
 	)
@@ -166,8 +166,8 @@ func TestUnknownField(t *testing.T) {
 	os.Setenv("FUBAR", "foo")
 
 	v := &mixConf{}
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"No.Exist": "FUBAR",
 		}),
 	)
@@ -182,8 +182,8 @@ func TestMissingEnv(t *testing.T) {
 	v := &mixConf{
 		Text: "default",
 	}
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"Text": "__TEST_MISSING_ENV_VAR",
 		}),
 	)
@@ -202,8 +202,8 @@ func TestEnvTypeMismatch(t *testing.T) {
 
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"Nested": "FUBAR",
 		}),
 	)
@@ -220,8 +220,8 @@ func TestUnmarshalTextFail(t *testing.T) {
 
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"TextFail": "FUBAR",
 		}),
 	)
@@ -237,8 +237,8 @@ func TestURLFail(t *testing.T) {
 
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"URL": "FUBAR",
 		}),
 	)
@@ -254,8 +254,8 @@ func TestNested(t *testing.T) {
 
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"NestedPtr.Value":    "FUBAR",
 			"NestedPtr.ValuePtr": "FUBAR",
 		}),
@@ -293,8 +293,8 @@ func TestBadNesting(t *testing.T) {
 
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"Nested.Value.WeDugTooDeep": "FUBAR",
 		}),
 	)
@@ -310,8 +310,8 @@ func TestAssignUnexported(t *testing.T) {
 
 	v := &mixConf{}
 
-	_, err := config.New(v,
-		config.WithEnvironment(map[string]string{
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
 			"hidden": "FUBAR",
 		}),
 	)

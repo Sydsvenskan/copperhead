@@ -1,11 +1,11 @@
-package config_test
+package copperhead_test
 
 import (
 	"fmt"
 	"net/url"
 	"os"
 
-	"github.com/Sydsvenskan/config"
+	"github.com/Sydsvenskan/copperhead"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -33,16 +33,16 @@ func ExampleUsage() {
 	cfg := Configuration{
 		WD: "with defaults",
 	}
-	_, err := config.New(&cfg,
-		config.WithConfigurationFile(
-			"example.conf", config.FileRequired, nil,
+	_, err := copperhead.New(&cfg,
+		copperhead.WithConfigurationFile(
+			"example.conf", copperhead.FileRequired, nil,
 		),
-		config.WithConfigurationFile(
+		copperhead.WithConfigurationFile(
 			"example.conf.yaml",
-			config.FileRequired,
-			config.UnmarshalerFunc(yaml.Unmarshal),
+			copperhead.FileRequired,
+			copperhead.UnmarshalerFunc(yaml.Unmarshal),
 		),
-		config.WithEnvironment(map[string]string{
+		copperhead.WithEnvironment(map[string]string{
 			"Name":         "APP_NAME",
 			"URL":          "APP_URL",
 			"Birdie.Value": "APP_BIRD",
