@@ -17,6 +17,7 @@ type Configuration struct {
 	Birdie *ExampleNest
 }
 
+// ExampleNest is an exampe of a nested configuration struct.
 type ExampleNest struct {
 	Name       string
 	Value      int64
@@ -24,6 +25,7 @@ type ExampleNest struct {
 	ComplexEnv int
 }
 
+// ExampleUsage is a testable example for Copperhead
 func ExampleUsage() {
 	os.Setenv("APP_NAME", "example-app")
 	os.Setenv("APP_URL", "https://www.example.com")
