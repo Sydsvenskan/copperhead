@@ -1,3 +1,5 @@
+// Package copperhead provides a configuration loader that can load
+// configuration from environment, files, or byte slices.
 package copperhead
 
 import (
