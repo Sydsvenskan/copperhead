@@ -45,12 +45,8 @@ func (uf UnmarshalerFunc) Unmarshal(
 
 // WithConfigurationData reads the provided configuration data.
 func WithConfigurationData(data []byte, unm Unmarshaler) Option {
-	if unm == nil {
-		unm = UnmarshalerFunc(json.Unmarshal)
-	}
 	return func(c *Config) error {
-		err := unm.Unmarshal(data, c.obj.Addr().Interface())
-		return errors.Wrap(err, "failed to unmarshal configuration data")
+		return c.Data(data, unm)
 	}
 }
 
@@ -65,30 +61,8 @@ const (
 
 // WithConfigurationFile reads configuration from a file.
 func WithConfigurationFile(filename string, mode FileMode, unm Unmarshaler) Option {
-	if unm == nil {
-		unm = UnmarshalerFunc(json.Unmarshal)
-	}
 	return func(c *Config) error {
-		data, err := ioutil.ReadFile(filename)
-		if os.IsNotExist(err) && mode == FileOptional {
-			return nil
-		}
-
-		if os.IsNotExist(err) {
-			return errors.Errorf(
-				"missing configuration file %q",
-				filename,
-			)
-		} else if err != nil {
-			return errors.Wrap(err,
-				"failed to read configuration file")
-		}
-
-		err = unm.Unmarshal(data, c.obj.Addr().Interface())
-		return errors.Wrapf(err,
-			"failed to unmarshal configuration file %q",
-			filename,
-		)
+		return c.File(filename, mode, unm)
 	}
 }
 
@@ -145,6 +119,43 @@ func (c *Config) Environment(envMap map[string]string) error {
 		}
 	}
 	return nil
+}
+
+// File reads configuration from a file.
+func (c *Config) File(filename string, mode FileMode, unm Unmarshaler) error {
+	if unm == nil {
+		unm = UnmarshalerFunc(json.Unmarshal)
+	}
+
+	data, err := ioutil.ReadFile(filename)
+	if os.IsNotExist(err) && mode == FileOptional {
+		return nil
+	}
+
+	if os.IsNotExist(err) {
+		return errors.Errorf(
+			"missing configuration file %q",
+			filename,
+		)
+	} else if err != nil {
+		return errors.Wrap(err,
+			"failed to read configuration file")
+	}
+
+	err = unm.Unmarshal(data, c.obj.Addr().Interface())
+	return errors.Wrapf(err,
+		"failed to unmarshal configuration file %q",
+		filename,
+	)
+}
+
+// Data reads the provided configuration data.
+func (c *Config) Data(data []byte, unm Unmarshaler) error {
+	if unm == nil {
+		unm = UnmarshalerFunc(json.Unmarshal)
+	}
+	err := unm.Unmarshal(data, c.obj.Addr().Interface())
+	return errors.Wrap(err, "failed to unmarshal configuration data")
 }
 
 var urlType = reflect.TypeOf(url.URL{})
