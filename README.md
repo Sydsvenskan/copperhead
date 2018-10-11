@@ -1,5 +1,7 @@
 # Copperhead
 
+[![GoDoc](https://godoc.org/github.com/Sydsvenskan/copperhead?status.svg)](https://godoc.org/github.com/Sydsvenskan/copperhead) [![Goreport](https://goreportcard.com/badge/github.com/Sydsvenskan/copperhead)](https://goreportcard.com/report/github.com/Sydsvenskan/copperhead) [![Build Status](https://travis-ci.org/Sydsvenskan/copperhead.svg?branch=master)](https://travis-ci.org/Sydsvenskan/copperhead) [![codecov](https://codecov.io/gh/Sydsvenskan/copperhead/branch/master/graph/badge.svg)](https://codecov.io/gh/Sydsvenskan/copperhead)
+
 Configuration loader that can load configuration from environment, files, or byte slices.
 
 Copperhead was written to match the features that we actually used in viper (https://github.com/spf13/viper). Configuration is always loaded into a struct. Unless you pass an `UnmarshalerFunc` the only supported format is JSON. The predecence of configuration sources is completely controlled by the order in which you load them. URLs can be parsed as a part of the configuration loading step.
