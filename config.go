@@ -22,21 +22,6 @@ type Config struct {
 // Option configures our... inception!
 type Option func(c *Config) error
 
-// URL is an TextUnmarshaler-aware URL
-type URL struct {
-	url.URL
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (u *URL) UnmarshalText(text []byte) error {
-	var u2 url.URL
-	if err := u2.UnmarshalBinary(text); err != nil {
-		return err
-	}
-	u.URL = u2
-	return nil
-}
-
 // WithEnvironment bootstraps our configuration with environment
 // variables.
 func WithEnvironment(envMap map[string]string) Option {
@@ -112,6 +97,13 @@ func New(conf interface{}, opts ...Option) (*Config, error) {
 	}
 
 	return c, nil
+}
+
+// Getenv reads a single environment variable.
+func (c *Config) Getenv(field, env string) error {
+	return c.Environment(map[string]string{
+		field: env,
+	})
 }
 
 // Environment populates our configuration with environment variables.

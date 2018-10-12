@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Sydsvenskan/copperhead"
 	"github.com/pkg/errors"
@@ -27,6 +28,9 @@ type mixConf struct {
 	TextFail  textFail
 	URL       *url.URL
 	CopperURL *copperhead.URL
+
+	Time     copperhead.Time
+	Duration copperhead.Duration
 }
 
 type nested struct {
@@ -39,6 +43,55 @@ type textFail struct{}
 // UnmarshalText that always fails
 func (*textFail) UnmarshalText(data []byte) error {
 	return errors.New("born to fail")
+}
+
+func TestTimeConfig(t *testing.T) {
+	var conf mixConf
+
+	var ts = "2018-10-12T13:47:05Z"
+	var ds = "10s"
+
+	os.Setenv("TEST_TIME", ts)
+	os.Setenv("TEST_DURATION", ds)
+
+	_, err := copperhead.New(&conf,
+		copperhead.WithEnvironment(map[string]string{
+			"Time":     "TEST_TIME",
+			"Duration": "TEST_DURATION",
+		}))
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if conf.Time.Format(time.RFC3339) != ts {
+		t.Errorf("unexpected Time value %q",
+			conf.Time.Format(time.RFC3339))
+	}
+
+	if conf.Duration.String() != ds {
+		t.Errorf("unexpected Duration value %q",
+			conf.Duration.String())
+	}
+}
+
+func TestBadTimeConfig(t *testing.T) {
+	var conf mixConf
+
+	os.Setenv("TEST_TIME", "NEED MORE INPUT")
+	os.Setenv("TEST_DURATION", "UNTIL THE END OF TIME!")
+
+	cop, err := copperhead.New(&conf)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if err := cop.Getenv("Time", "TEST_TIME"); err == nil {
+		t.Error("expected time parsing to fail")
+	}
+
+	if err := cop.Getenv("Duration", "TEST_DURATION"); err == nil {
+		t.Error("expected duration parsing to fail")
+	}
 }
 
 func TestNilConfiguration(t *testing.T) {
