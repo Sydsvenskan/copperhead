@@ -2,7 +2,6 @@ package copperhead_test
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 
 	"github.com/Sydsvenskan/copperhead"
@@ -11,10 +10,11 @@ import (
 
 // Configuration is an example configuration struct
 type Configuration struct {
-	Name   string
-	WD     string
-	URL    *url.URL
-	Birdie *ExampleNest
+	Name    string
+	WD      string
+	URL     *copperhead.URL
+	FileURL *copperhead.URL
+	Birdie  *ExampleNest
 }
 
 // ExampleNest is an exampe of a nested configuration struct.
@@ -35,12 +35,12 @@ func ExampleUsage() {
 	cfg := Configuration{
 		WD: "with defaults",
 	}
-	_, err := copperhead.New(&cfg,
+	ch, err := copperhead.New(&cfg,
 		copperhead.WithConfigurationFile(
-			"example.conf", copperhead.FileRequired, nil,
+			"./test-data/example.conf", copperhead.FileRequired, nil,
 		),
 		copperhead.WithConfigurationFile(
-			"example.conf.yaml",
+			"./test-data/example.conf.yaml",
 			copperhead.FileRequired,
 			copperhead.UnmarshalerFunc(yaml.Unmarshal),
 		),
@@ -65,6 +65,24 @@ func ExampleUsage() {
 	fmt.Println("Birdie.YamlIT:", cfg.Birdie.YamlIT)
 	fmt.Println("Birdie.ComplexEnv:", cfg.Birdie.ComplexEnv)
 
+	// Load additional config file.
+	err = ch.File("./test-data/file-url.json",
+		copperhead.FileRequired, nil)
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+	fmt.Println("File URL (json):", cfg.FileURL.String())
+
+	err = ch.File("./test-data/file-url.yaml",
+		copperhead.FileRequired,
+		copperhead.UnmarshalerFunc(yaml.Unmarshal))
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+	fmt.Println("File URL (yaml):", cfg.FileURL.String())
+
 	// Output:
 	// Name: example-app
 	// WD: with defaults
@@ -74,4 +92,6 @@ func ExampleUsage() {
 	// Birdie.Value: 12
 	// Birdie.YamlIT: Hello from YAML
 	// Birdie.ComplexEnv: 42
+	// File URL (json): http://www.example.com/json
+	// File URL (yaml): http://www.example.com/yaml
 }
