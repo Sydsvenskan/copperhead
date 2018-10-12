@@ -24,8 +24,9 @@ type mixConf struct {
 	NestedPtr      *nested
 	Nested         nested
 
-	TextFail textFail
-	URL      *url.URL
+	TextFail  textFail
+	URL       *url.URL
+	CopperURL *copperhead.URL
 }
 
 type nested struct {
@@ -232,6 +233,21 @@ func TestUnmarshalTextFail(t *testing.T) {
 	t.Log(err.Error())
 }
 
+func TestURLOK(t *testing.T) {
+	os.Setenv("FUBAR", "https://www.example.com")
+
+	v := &mixConf{}
+
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
+			"URL": "FUBAR",
+		}),
+	)
+	if err != nil {
+		t.Error(err.Error())
+	}
+}
+
 func TestURLFail(t *testing.T) {
 	os.Setenv("FUBAR", ":")
 
@@ -240,6 +256,23 @@ func TestURLFail(t *testing.T) {
 	_, err := copperhead.New(v,
 		copperhead.WithEnvironment(map[string]string{
 			"URL": "FUBAR",
+		}),
+	)
+	if err == nil {
+		t.Error("should have failed to parse URL")
+		return
+	}
+	t.Log(err.Error())
+}
+
+func TestCopperheadURLFail(t *testing.T) {
+	os.Setenv("FUBAR", ":")
+
+	v := &mixConf{}
+
+	_, err := copperhead.New(v,
+		copperhead.WithEnvironment(map[string]string{
+			"CopperURL": "FUBAR",
 		}),
 	)
 	if err == nil {

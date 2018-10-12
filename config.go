@@ -192,8 +192,8 @@ func (c *Config) assign(target reflect.Value, val string) error {
 
 	iface := target.Addr().Interface()
 
-	// Special handling of URLs, because it's so common and why
-	// doesn't it implement TextUnmarshaler.
+	// DEPRECATED: Special handling of URLs, because it's so
+	// common and why doesn't it implement TextUnmarshaler.
 	if target.Type().ConvertibleTo(urlType) {
 		ub := iface.(encoding.BinaryUnmarshaler)
 		err := ub.UnmarshalBinary([]byte(val))
