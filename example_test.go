@@ -25,8 +25,8 @@ type ExampleNest struct {
 	ComplexEnv int
 }
 
-// ExampleUsage is a testable example for Copperhead
-func ExampleUsage() {
+// ExampleConfig is a testable example for Copperhead
+func ExampleConfig() {
 	os.Setenv("APP_NAME", "example-app")
 	os.Setenv("APP_URL", "https://www.example.com")
 	os.Setenv("APP_BIRD", "12")
