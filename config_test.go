@@ -407,3 +407,23 @@ func TestAssignUnexported(t *testing.T) {
 	}
 	t.Log(err.Error())
 }
+
+func TestMustParseURLPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected MustParseURL to panic")
+		}
+	}()
+
+	_ = copperhead.MustParseURL(":")
+}
+
+func TestMustParseURL(t *testing.T) {
+	rawURL := "https://example.com"
+	u := copperhead.MustParseURL(rawURL)
+
+	if u.String() != rawURL {
+		t.Errorf("expected parsed URL to be %q, got %q",
+			rawURL, u.String())
+	}
+}

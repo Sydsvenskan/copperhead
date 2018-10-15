@@ -20,6 +20,16 @@ func (u *URL) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// MustParseURL is a helper function for setting configuration
+// defaults. Panics if the passed url is invalid.
+func MustParseURL(rawURL string) *URL {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		panic(err)
+	}
+	return &URL{URL: *u}
+}
+
 // Time is an TextUnmarshaler-aware Time
 type Time struct {
 	time.Time
