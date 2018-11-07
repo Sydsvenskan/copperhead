@@ -251,6 +251,15 @@ func TestMissingEnv(t *testing.T) {
 	}
 }
 
+func TestInlineRequire(t *testing.T) {
+	_, err := copperhead.New(&mixConf{},
+		copperhead.Require("Text"),
+	)
+	if err == nil {
+		t.Error("Text should be missing")
+	}
+}
+
 func TestRequire(t *testing.T) {
 	v := &mixConf{}
 	c, err := copperhead.New(v)

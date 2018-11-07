@@ -68,6 +68,13 @@ func WithConfigurationFile(filename string, mode FileMode, unm Unmarshaler) Opti
 	}
 }
 
+// Require verifies that configuration values are set.
+func Require(names ...string) Option {
+	return func(c *Config) error {
+		return c.Require(names...)
+	}
+}
+
 // New creates a new configuration that populates conf.
 func New(conf interface{}, opts ...Option) (*Config, error) {
 	if conf == nil {
@@ -215,6 +222,7 @@ func (c *Config) assign(target reflect.Value, val string) error {
 	return errors.Wrap(err, "failed to decode value as JSON")
 }
 
+// Require checks if congiguration values are set.
 func (c *Config) Require(names ...string) error {
 	for _, name := range names {
 		v, err := c.resolve(name)
