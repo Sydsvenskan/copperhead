@@ -227,7 +227,7 @@ func (c *Config) Require(names ...string) error {
 			if v.IsNil() {
 				return errors.Errorf("%q is nil", name)
 			}
-			return nil
+			continue
 		}
 
 		zero := reflect.New(v.Type()).Elem()

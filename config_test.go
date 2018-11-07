@@ -285,10 +285,46 @@ func TestRequire(t *testing.T) {
 		t.Error("Nested struct should not be missing")
 	}
 
+	if err := c.Require("Nested", "Text"); err == nil {
+		t.Error("Text should still be missing")
+	}
+
 	v.CopperURL = copperhead.MustParseURL("https://example.com")
 
 	if err := c.Require("CopperURL"); err != nil {
 		t.Error("CopperURL should not be missing")
+	}
+}
+
+func TestRequireOnStatic(t *testing.T) {
+	conf := struct {
+		Env    string
+		Port   int
+		Consul *copperhead.URL
+
+		BulkQueue          *copperhead.URL
+		TransactionalQueue *copperhead.URL
+		TriggerQueue       *copperhead.URL
+	}{
+		Env:  "test",
+		Port: 6194,
+		Consul: copperhead.MustParseURL(
+			"http://127.0.0.1:8500",
+		),
+	}
+
+	c, err := copperhead.New(&conf)
+	if err != nil {
+		t.Error("failed to create config: " + err.Error())
+		return
+	}
+
+	err = c.Require(
+		"Env", "Port", "Consul",
+		"BulkQueue", "TransactionalQueue", "TriggerQueue",
+	)
+	if err == nil {
+		t.Error("BulkQueue should be missing")
 	}
 }
 
