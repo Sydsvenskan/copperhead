@@ -75,6 +75,12 @@ func Require(names ...string) Option {
 	}
 }
 
+// Configure populates conf.
+func Configure(conf interface{}, opts ...Option) error {
+	_, err := New(conf, opts...)
+	return err
+}
+
 // New creates a new configuration that populates conf.
 func New(conf interface{}, opts ...Option) (*Config, error) {
 	if conf == nil {

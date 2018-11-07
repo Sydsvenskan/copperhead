@@ -252,7 +252,7 @@ func TestMissingEnv(t *testing.T) {
 }
 
 func TestInlineRequire(t *testing.T) {
-	_, err := copperhead.New(&mixConf{},
+	err := copperhead.Configure(&mixConf{},
 		copperhead.Require("Text"),
 	)
 	if err == nil {
