@@ -251,6 +251,47 @@ func TestMissingEnv(t *testing.T) {
 	}
 }
 
+func TestRequire(t *testing.T) {
+	v := &mixConf{}
+	c, err := copperhead.New(v)
+	if err != nil {
+		t.Error("failed to create config: " + err.Error())
+		return
+	}
+
+	if err := c.Require("Text"); err == nil {
+		t.Error("Text should be missing")
+	}
+
+	if err := c.Require("Is___NotAField"); err == nil {
+		t.Error("Is___NotAField should not resolve")
+	}
+
+	if err := c.Require("EmptyInterface"); err == nil {
+		t.Error("EmptyInterface should be missing")
+	}
+
+	if err := c.Require("CopperURL"); err == nil {
+		t.Error("CopperURL should be missing")
+	}
+
+	if err := c.Require("Nested"); err == nil {
+		t.Error("Nested struct should be missing")
+	}
+
+	v.Nested.Value = "Hello!"
+
+	if err := c.Require("Nested"); err != nil {
+		t.Error("Nested struct should not be missing")
+	}
+
+	v.CopperURL = copperhead.MustParseURL("https://example.com")
+
+	if err := c.Require("CopperURL"); err != nil {
+		t.Error("CopperURL should not be missing")
+	}
+}
+
 func TestEnvTypeMismatch(t *testing.T) {
 	os.Setenv("FUBAR", "0")
 

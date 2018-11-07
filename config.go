@@ -120,7 +120,7 @@ func (c *Config) Environment(envMap map[string]string) error {
 			continue
 		}
 
-		if err := c.assign(*v, eVal); err != nil {
+		if err := c.assign(v, eVal); err != nil {
 			return errors.Wrapf(err,
 				"could not assign the value of %q to %q",
 				envName, name,
@@ -172,6 +172,12 @@ var urlType = reflect.TypeOf(url.URL{})
 func (c *Config) assign(target reflect.Value, val string) error {
 	v := reflect.ValueOf(val)
 
+	zero, err := ensureZero("target", target)
+	if err != nil {
+		return err
+	}
+	target = *zero
+
 	if !target.CanSet() {
 		return errors.New("cannot set the value")
 	}
@@ -205,11 +211,37 @@ func (c *Config) assign(target reflect.Value, val string) error {
 	}
 
 	// Fall back to JSON unmarshalling
-	err := json.Unmarshal([]byte(val), iface)
+	err = json.Unmarshal([]byte(val), iface)
 	return errors.Wrap(err, "failed to decode value as JSON")
 }
 
-func (c *Config) resolve(name string) (*reflect.Value, error) {
+func (c *Config) Require(names ...string) error {
+	for _, name := range names {
+		v, err := c.resolve(name)
+		if err != nil {
+			return errors.Wrapf(err,
+				"failed to resolve %q", name)
+		}
+
+		if v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				return errors.Errorf("%q is nil", name)
+			}
+			return nil
+		}
+
+		zero := reflect.New(v.Type()).Elem()
+
+		if zero.Interface() == v.Interface() {
+			return errors.Errorf(
+				"%q is empty", name)
+		}
+
+	}
+	return nil
+}
+
+func (c *Config) resolve(name string) (reflect.Value, error) {
 	path := strings.Split(name, ".")
 
 	n := c.obj
@@ -218,7 +250,7 @@ func (c *Config) resolve(name string) (*reflect.Value, error) {
 		path = path[1:]
 
 		if n.Kind() != reflect.Struct {
-			return nil, errors.Errorf(
+			return n, errors.Errorf(
 				"cannot get field %q from a %q value",
 				head, n.Kind().String(),
 			)
@@ -226,33 +258,45 @@ func (c *Config) resolve(name string) (*reflect.Value, error) {
 
 		field := n.FieldByName(head)
 		if !field.IsValid() {
-			return nil, errors.Errorf(
+			return n, errors.Errorf(
 				"%q doesn't have a field %q",
 				n.Type().Name(), head,
 			)
 		}
 
-		// We attempt to populate nil pointers with zero
-		// values.
-		if field.Kind() == reflect.Ptr && field.IsNil() {
-			e := field.Type().Elem()
-			if e.Kind() == reflect.Ptr {
-				return nil, errors.Errorf(
-					"pointers to pointers (as in %q being a %q) are unsupported",
-					head, field.Type().String(),
-				)
+		if len(path) > 0 {
+			z, err := ensureZero(head, field)
+			if err != nil {
+				return n, err
 			}
-
-			zero := reflect.New(e)
-			field.Set(zero)
-		}
-
-		if field.Kind() == reflect.Ptr {
-			field = field.Elem()
+			field = *z
 		}
 
 		n = field
 	}
 
-	return &n, nil
+	return n, nil
+}
+
+func ensureZero(name string, field reflect.Value) (*reflect.Value, error) {
+	// We attempt to populate nil pointers with zero
+	// values.
+	if field.Kind() == reflect.Ptr && field.IsNil() {
+		e := field.Type().Elem()
+		if e.Kind() == reflect.Ptr {
+			return nil, errors.Errorf(
+				"pointers to pointers (as in %q being a %q) are unsupported",
+				name, field.Type().String(),
+			)
+		}
+
+		zero := reflect.New(e)
+		field.Set(zero)
+	}
+
+	if field.Kind() == reflect.Ptr {
+		field = field.Elem()
+	}
+
+	return &field, nil
 }
