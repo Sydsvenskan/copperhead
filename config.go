@@ -244,6 +244,12 @@ func (c *Config) Require(names ...string) error {
 			continue
 		}
 
+		if v.Kind() == reflect.Bool {
+			// Required isn't a meaningful concept for
+			// booleans.
+			continue
+		}
+
 		zero := reflect.New(v.Type()).Elem()
 
 		if zero.Interface() == v.Interface() {
