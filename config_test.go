@@ -1,13 +1,13 @@
 package copperhead_test
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/Sydsvenskan/copperhead"
-	"github.com/pkg/errors"
 )
 
 type someIFace interface {
@@ -42,7 +42,7 @@ type textFail struct{}
 
 // UnmarshalText that always fails
 func (*textFail) UnmarshalText(data []byte) error {
-	return errors.New("born to fail")
+	return fmt.Errorf("born to fail")
 }
 
 func TestTimeConfig(t *testing.T) {

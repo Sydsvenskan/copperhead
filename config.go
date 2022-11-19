@@ -5,13 +5,12 @@ package copperhead
 import (
 	"encoding"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"reflect"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // Config encapsulates configuration loading.
@@ -84,18 +83,18 @@ func Configure(conf interface{}, opts ...Option) error {
 // New creates a new configuration that populates conf.
 func New(conf interface{}, opts ...Option) (*Config, error) {
 	if conf == nil {
-		return nil, errors.New("conf cannot be nil")
+		return nil, fmt.Errorf("conf cannot be nil")
 	}
 
 	v := reflect.ValueOf(conf)
 	if v.Type().Kind() != reflect.Ptr {
-		return nil, errors.New(
+		return nil, fmt.Errorf(
 			"conf must be a pointer to a struct")
 	}
 
 	v = reflect.Indirect(reflect.ValueOf(conf))
 	if v.Kind() != reflect.Struct {
-		return nil, errors.New(
+		return nil, fmt.Errorf(
 			"conf must be a pointer to a struct")
 	}
 
@@ -124,8 +123,8 @@ func (c *Config) Environment(envMap map[string]string) error {
 	for name, envName := range envMap {
 		v, err := c.resolve(name)
 		if err != nil {
-			return errors.Wrapf(err,
-				"could not resolve %q", name)
+			return fmt.Errorf("could not resolve %q: %w",
+				name, err)
 		}
 
 		eVal, ok := os.LookupEnv(envName)
@@ -134,9 +133,8 @@ func (c *Config) Environment(envMap map[string]string) error {
 		}
 
 		if err := c.assign(v, eVal); err != nil {
-			return errors.Wrapf(err,
-				"could not assign the value of %q to %q",
-				envName, name,
+			return fmt.Errorf("could not assign the value of %q to %q: %w",
+				envName, name, err,
 			)
 		}
 	}
@@ -155,20 +153,22 @@ func (c *Config) File(filename string, mode FileMode, unm Unmarshaler) error {
 	}
 
 	if os.IsNotExist(err) {
-		return errors.Errorf(
-			"missing configuration file %q",
-			filename,
+		return fmt.Errorf("missing configuration file %q: %w",
+			filename, err,
 		)
+
 	} else if err != nil {
-		return errors.Wrap(err,
-			"failed to read configuration file")
+		return fmt.Errorf("failed to read configuration file: %w", err)
 	}
 
 	err = unm.Unmarshal(data, c.obj.Addr().Interface())
-	return errors.Wrapf(err,
-		"failed to unmarshal configuration file %q",
-		filename,
-	)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal configuration file %q: %w",
+			filename, err,
+		)
+	}
+
+	return nil
 }
 
 // Data reads the provided configuration data.
@@ -177,7 +177,10 @@ func (c *Config) Data(data []byte, unm Unmarshaler) error {
 		unm = UnmarshalerFunc(json.Unmarshal)
 	}
 	err := unm.Unmarshal(data, c.obj.Addr().Interface())
-	return errors.Wrap(err, "failed to unmarshal configuration data")
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal configuration data: %w", err)
+	}
+	return nil
 }
 
 var urlType = reflect.TypeOf(url.URL{})
@@ -192,7 +195,7 @@ func (c *Config) assign(target reflect.Value, val string) error {
 	target = *zero
 
 	if !target.CanSet() {
-		return errors.New("cannot set the value")
+		return fmt.Errorf("cannot set the value")
 	}
 
 	// Direct assignment
@@ -225,7 +228,10 @@ func (c *Config) assign(target reflect.Value, val string) error {
 
 	// Fall back to JSON unmarshalling
 	err = json.Unmarshal([]byte(val), iface)
-	return errors.Wrap(err, "failed to decode value as JSON")
+	if err != nil {
+		return fmt.Errorf("failed to decode value as JSON: %w", err)
+	}
+	return nil
 }
 
 // Require checks if congiguration values are set.
@@ -233,13 +239,14 @@ func (c *Config) Require(names ...string) error {
 	for _, name := range names {
 		v, err := c.resolve(name)
 		if err != nil {
-			return errors.Wrapf(err,
-				"failed to resolve %q", name)
+			return fmt.Errorf("failed to resolve %q: %w",
+				name, err,
+			)
 		}
 
 		if v.Kind() == reflect.Ptr {
 			if v.IsNil() {
-				return errors.Errorf("%q is nil", name)
+				return fmt.Errorf("%q is nil", name)
 			}
 			continue
 		}
@@ -253,7 +260,7 @@ func (c *Config) Require(names ...string) error {
 		zero := reflect.New(v.Type()).Elem()
 
 		if zero.Interface() == v.Interface() {
-			return errors.Errorf(
+			return fmt.Errorf(
 				"%q is empty", name)
 		}
 
@@ -270,7 +277,7 @@ func (c *Config) resolve(name string) (reflect.Value, error) {
 		path = path[1:]
 
 		if n.Kind() != reflect.Struct {
-			return n, errors.Errorf(
+			return n, fmt.Errorf(
 				"cannot get field %q from a %q value",
 				head, n.Kind().String(),
 			)
@@ -278,7 +285,7 @@ func (c *Config) resolve(name string) (reflect.Value, error) {
 
 		field := n.FieldByName(head)
 		if !field.IsValid() {
-			return n, errors.Errorf(
+			return n, fmt.Errorf(
 				"%q doesn't have a field %q",
 				n.Type().Name(), head,
 			)
@@ -304,7 +311,7 @@ func ensureZero(name string, field reflect.Value) (*reflect.Value, error) {
 	if field.Kind() == reflect.Ptr && field.IsNil() {
 		e := field.Type().Elem()
 		if e.Kind() == reflect.Ptr {
-			return nil, errors.Errorf(
+			return nil, fmt.Errorf(
 				"pointers to pointers (as in %q being a %q) are unsupported",
 				name, field.Type().String(),
 			)
